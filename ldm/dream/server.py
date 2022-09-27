@@ -176,7 +176,8 @@ class DreamServer(BaseHTTPRequestHandler):
             if not upscaled:
                 with open(os.path.join(self.outdir, "dream_web_log.txt"), "a") as log:
                     log.write(f"{path}: {json.dumps(config)}\n")
-                config.pop('embedding') # delete embedding from response
+                if 'embedding' in config:
+                    config.pop('embedding') # delete embedding from response
                 self.wfile.write(bytes(json.dumps(
                     {'event': 'result', 'url': path, 'seed': seed, 'config': config}
                 ) + '\n',"utf-8"))
