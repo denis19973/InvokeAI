@@ -1,5 +1,9 @@
 <h1 align='center'><b>InvokeAI: A Stable Diffusion Toolkit</b></h1>
 
+## Running 
+`python3 dream.py --web --host 0.0.0.0 --outdir /home/kozak/InvokeAI/outputs/img-samples`
+
+
 <p align='center'>
 <img src="docs/assets/logo.png"/>
 </p>

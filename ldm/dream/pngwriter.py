@@ -34,6 +34,7 @@ class PngWriter:
     # returns full path of output
     def save_image_and_prompt_to_png(self, image, prompt, name):
         path = os.path.join(self.outdir, name)
+        print('saving outdir: ', path)
         info = PngImagePlugin.PngInfo()
         info.add_text('Dream', prompt)
         image.save(path, 'PNG', pnginfo=info)

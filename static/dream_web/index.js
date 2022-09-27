@@ -37,7 +37,7 @@ function appendOutput(src, seed, config) {
     figcaption.addEventListener('click', () => {
         let form = document.querySelector("#generate-form");
         for (const [k, v] of new FormData(form)) {
-            if (k == 'initimg') { continue; }
+            if (k == 'initimg' || k == 'embedding') { continue; }
             form.querySelector(`*[name=${k}]`).value = config[k];
         }
 
@@ -85,6 +85,9 @@ async function generateSubmit(form) {
     let formData = Object.fromEntries(new FormData(form));
     formData.initimg_name = formData.initimg.name
     formData.initimg = formData.initimg.name !== '' ? await toBase64(formData.initimg) : null;
+
+    formData.embedding_name = formData.embedding.name
+    formData.embedding = formData.embedding.name !== '' ? await toBase64(formData.embedding) : null;
 
     let strength = formData.strength;
     let totalSteps = formData.initimg ? Math.floor(strength * formData.steps) : formData.steps;
@@ -191,6 +194,9 @@ window.onload = async () => {
     });
     document.querySelector("#remove-image").addEventListener('click', (e) => {
         initimg.value=null;
+    });
+    document.querySelector("#remove-embedding").addEventListener('click', (e) => {
+        embedding.value=null;
     });
     loadFields(document.querySelector("#generate-form"));
 

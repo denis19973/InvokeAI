@@ -1,4 +1,5 @@
 import argparse
+from calendar import c
 import json
 import base64
 import mimetypes
@@ -11,6 +12,7 @@ def build_opt(post_data, seed, gfpgan_model_exists):
     opt = argparse.Namespace()
     setattr(opt, 'prompt', post_data['prompt'])
     setattr(opt, 'init_img', post_data['initimg'])
+    setattr(opt, 'embedding', post_data['embedding'])
     setattr(opt, 'strength', float(post_data['strength']))
     setattr(opt, 'iterations', int(post_data['iterations']))
     setattr(opt, 'steps', int(post_data['steps']))
@@ -67,7 +69,7 @@ class DreamServer(BaseHTTPRequestHandler):
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
-            with open("./static/dream_web/index.html", "rb") as content:
+            with open(f"{os.getcwd()}/InvokeAI/static/dream_web/index.html", "rb") as content:
                 self.wfile.write(content.read())
         elif self.path == "/config.js":
             # unfortunately this import can't be at the top level, since that would cause a circular import
@@ -103,8 +105,13 @@ class DreamServer(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(bytes('{}', 'utf8'))
         else:
-            path = "." + self.path
-            cwd = os.path.realpath(os.getcwd())
+            path = self.path[1:] if self.path[0] == '/' else self.path
+            cwd = f"{os.path.realpath(os.getcwd())}/InvokeAI"
+            path = path.replace('home/kozak/InvokeAI/', '') # dirty way to fix problem with static routing
+            print('cwd', cwd)
+            print('path1: ', path)
+            path = os.path.join('/', cwd, path)
+            print('path: ', path)
             is_in_cwd = os.path.commonprefix((os.path.realpath(path), cwd)) == cwd
             if not (is_in_cwd and os.path.exists(path)):
                 self.send_response(404)
@@ -114,7 +121,7 @@ class DreamServer(BaseHTTPRequestHandler):
                 self.send_response(200)
                 self.send_header("Content-type", mime_type)
                 self.end_headers()
-                with open("." + self.path, "rb") as content:
+                with open(path, "rb") as content:
                     self.wfile.write(content.read())
             else:
                 self.send_response(404)
@@ -138,6 +145,9 @@ class DreamServer(BaseHTTPRequestHandler):
         # the outer scope of image_done()
         config = post_data.copy() # Shallow copy
         config['initimg'] = config.pop('initimg_name', '')
+        config['embedding'] = config.pop('embedding', '')
+        post_data['embedding'] = None  # todo: check this
+
 
         images_generated = 0    # helps keep track of when upscaling is started
         images_upscaled = 0     # helps keep track of when upscaling is completed
@@ -169,7 +179,7 @@ class DreamServer(BaseHTTPRequestHandler):
             if not upscaled:
                 with open(os.path.join(self.outdir, "dream_web_log.txt"), "a") as log:
                     log.write(f"{path}: {json.dumps(config)}\n")
-
+                config.pop('embedding') # delete embedding from response
                 self.wfile.write(bytes(json.dumps(
                     {'event': 'result', 'url': path, 'seed': seed, 'config': config}
                 ) + '\n',"utf-8"))
@@ -217,6 +227,17 @@ class DreamServer(BaseHTTPRequestHandler):
 
         try:
             if opt.init_img is None:
+                if opt.embedding is not None:
+                    emb_path = os.path.join(os.getcwd(), "emb-tmp.pt")
+                    with open(emb_path, "wb") as f:
+                        embedding = opt.embedding.split(",")[1] # Ignore mime type
+                        f.write(base64.b64decode(embedding))
+                    opt1 = argparse.Namespace(**vars(opt))
+                    print('adding embedding...')
+                    print(os.path.exists(emb_path))
+                    self.model.model = None
+                    self.model.embedding_path = emb_path
+                    self.model.load_model()
                 # Run txt2img
                 self.model.prompt2image(**vars(opt), step_callback=image_progress, image_callback=image_done)
             else:

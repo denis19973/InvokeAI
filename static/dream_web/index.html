@@ -79,6 +79,12 @@
             <label title="list of variations to apply, in the format `seed:weight,seed:weight,..." for="with_variations">With variations (seed:weight,seed:weight,...):</label>
             <input value="" type="text" id="with_variations" name="with_variations">
 	  </div>
+    <div id="embedding_file">
+      <label title="Upload your style file (.pt embedding)" for="embedding">Embedding (Upload your style file (.pt)) :</label>
+      <input type="file" id="embedding" name="embedding" accept=".pt">
+      <button type="button" id="remove-embedding">Remove File</button>
+      <br>
+    </div>
 	  <div id="img2img">
             <label title="Upload an image to use img2img" for="initimg">Initial image:</label>
             <input type="file" id="initimg" name="initimg" accept=".jpg, .jpeg, .png">
