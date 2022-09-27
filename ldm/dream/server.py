@@ -108,10 +108,7 @@ class DreamServer(BaseHTTPRequestHandler):
             path = self.path[1:] if self.path[0] == '/' else self.path
             cwd = f"{os.path.realpath(os.getcwd())}/InvokeAI"
             path = path.replace('home/kozak/InvokeAI/', '') # dirty way to fix problem with static routing
-            print('cwd', cwd)
-            print('path1: ', path)
             path = os.path.join('/', cwd, path)
-            print('path: ', path)
             is_in_cwd = os.path.commonprefix((os.path.realpath(path), cwd)) == cwd
             if not (is_in_cwd and os.path.exists(path)):
                 self.send_response(404)
@@ -233,8 +230,6 @@ class DreamServer(BaseHTTPRequestHandler):
                         embedding = opt.embedding.split(",")[1] # Ignore mime type
                         f.write(base64.b64decode(embedding))
                     opt1 = argparse.Namespace(**vars(opt))
-                    print('adding embedding...')
-                    print(os.path.exists(emb_path))
                     self.model.model = None
                     self.model.embedding_path = emb_path
                     self.model.load_model()
